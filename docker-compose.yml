@@ -4,3 +4,7 @@
     build:
       context: .
       dockerfile: AiHelpBot/Dockerfile
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DISCORD_CHANNEL_ID=${DISCORD_CHANNEL_ID}
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}

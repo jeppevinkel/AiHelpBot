@@ -1,0 +1,21 @@
+# This is a generated file. Not intended for manual editing.
+services:
+  aihelpbot:
+    build:
+      context: "C:\\Users\\Jeppe\\Documents\\RiderProjects\\AiHelpBot"
+      dockerfile: "AiHelpBot/Dockerfile"
+      target: "base"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net8.0/AiHelpBot.dll"
+    environment:
+      DOTNET_ENVIRONMENT: "Development"
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "aihelpbot:dev"
+    ports: []
+    volumes:
+    - "C:\\Users\\Jeppe\\.nuget\\packages:/home/app/.nuget/packages"
+    - "C:\\Users\\Jeppe\\Documents\\RiderProjects\\AiHelpBot\\AiHelpBot:/app:rw"
+    - "C:\\Users\\Jeppe\\Documents\\RiderProjects\\AiHelpBot:/src:rw"
+    working_dir: "/app"
