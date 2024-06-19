@@ -1,0 +1,44 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "master", "develop" ]
+
+jobs:
+  build:
+    name: Build & Publish
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.sha }}
+        fetch-depth: 0
+        
+    - name: Extract branch name
+      shell: bash
+      run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+      id: extract_branch
+      
+    - name: Bump version and push tag
+      uses: anothrNick/github-tag-action@1.67.0
+      id: tag
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        WITH_V: false
+        DEFAULT_BUMP: patch
+        PRERELEASE: ${{steps.extract_branch.outputs.branch != 'master' && true || false }}
+        
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Build and Publish the Docker image
+      run: |
+              label=$(date +%s)
+              latest_tag="${{steps.extract_branch.outputs.branch == 'master' && '--tag ghcr.io/jeppevinkel/ai-help-bot:latest' || '--tag ghcr.io/jeppevinkel/ai-help-bot:latest-dev'}}"
+              docker build ./AiHelpBot --file Dockerfile $latest_tag --tag ghcr.io/jeppevinkel/ai-help-bot:${{steps.tag.outputs.new_tag}}
+              docker push --all-tags ghcr.io/jeppevinkel/ai-help-bot
