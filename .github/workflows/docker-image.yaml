@@ -40,5 +40,5 @@ jobs:
       run: |
               label=$(date +%s)
               latest_tag="${{steps.extract_branch.outputs.branch == 'master' && '--tag ghcr.io/jeppevinkel/ai-help-bot:latest' || '--tag ghcr.io/jeppevinkel/ai-help-bot:latest-dev'}}"
-              docker build ./AiHelpBot --file ./AiHelpBot/Dockerfile $latest_tag --tag ghcr.io/jeppevinkel/ai-help-bot:${{steps.tag.outputs.new_tag}}
+              docker build . --file ./AiHelpBot/Dockerfile $latest_tag --tag ghcr.io/jeppevinkel/ai-help-bot:${{steps.tag.outputs.new_tag}}
               docker push --all-tags ghcr.io/jeppevinkel/ai-help-bot
