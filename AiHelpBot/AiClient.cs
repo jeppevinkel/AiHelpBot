@@ -5,7 +5,7 @@ namespace AiHelpBot;
 
 public class AiClient
 {
-    private readonly ChatClient _chatClient = new(model: "gpt-4o",
+    private readonly ChatClient _chatClient = new(model: Environment.GetEnvironmentVariable("OPENAI_API_MODEL") ?? "gpt-4o",
         Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? throw new Exception("OPENAI_API_KEY not defined."));
 
     private readonly List<ChatMessage> _chatMessages = [];
