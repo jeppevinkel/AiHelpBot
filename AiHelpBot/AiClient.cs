@@ -36,7 +36,7 @@ public class AiClient
                 new SystemChatMessage(
                     SystemMessage)
             };
-            return list.Concat(_chatMessages.Slice(Math.Max(0, _chatMessages.Count - (MessageBuffer+1)),
+            return list.Concat(_chatMessages.Slice(Math.Max(0, _chatMessages.Count - MessageBuffer),
                 Math.Min(_chatMessages.Count, MessageBuffer))).ToList();
         }
     }
