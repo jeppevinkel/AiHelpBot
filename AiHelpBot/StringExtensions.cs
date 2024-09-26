@@ -27,6 +27,12 @@ public static class StringExtensions
         while (true)
         {
             var possibleIndex = remainingText.LastIndexOf(newline, StringComparison.Ordinal);
+
+            if (possibleIndex == -1)
+            {
+                return maxLength;
+            }
+            
             remainingText = remainingText[..possibleIndex];
 
             if (remainingText.EndsWith(newline))
