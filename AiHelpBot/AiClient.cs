@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using Discord;
+using Discord.WebSocket;
 using OpenAI.Chat;
 
 namespace AiHelpBot;
@@ -51,32 +52,83 @@ public class AiClient
             Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? throw new Exception("OPENAI_API_KEY not defined."));
     }
 
-    public async Task<string> CompleteChatAsync(string message, CancellationToken cancellationToken = default)
+    public async Task<string> CompleteChatAsync(SocketMessage message, CancellationToken cancellationToken = default)
     {
-        _chatMessages.Add(new UserChatMessage(message));
+        _chatMessages.Add(new UserChatMessage(message.Content));
 
-        ChatCompletion completion = await _chatClient.CompleteChatAsync(MessagesWithSystem, null, cancellationToken);
-
-        switch (completion.FinishReason)
+        bool requiresAction;
+        do
         {
-            case ChatFinishReason.Stop:
+            requiresAction = false;
+            ChatCompletion completion = await _chatClient.CompleteChatAsync(MessagesWithSystem,
+                new ChatCompletionOptions()
+                {
+                    Tools =
+                    {
+                        ChatTool.CreateFunctionTool(
+                            functionName: nameof(AddReactionAsync),
+                            functionDescription: "Add a heart reaction to the message."
+                        )
+                    }
+                }, cancellationToken);
+
+            switch (completion.FinishReason)
             {
-                _chatMessages.Add(new AssistantChatMessage(completion));
-                return completion.ToString();
+                case ChatFinishReason.Stop:
+                {
+                    _chatMessages.Add(new AssistantChatMessage(completion));
+                    return completion.ToString();
+                }
+                case ChatFinishReason.Length:
+                    throw new NotImplementedException(
+                        "Incomplete model output due to MaxTokens parameter or token limit exceeded.");
+
+                case ChatFinishReason.ContentFilter:
+                    throw new NotImplementedException("Omitted content due to a content filter flag.");
+
+                case ChatFinishReason.FunctionCall:
+                    throw new NotImplementedException("Deprecated in favor of tool calls.");
+
+                case ChatFinishReason.ToolCalls:
+                {
+                    _chatMessages.Add(new AssistantChatMessage(completion));
+
+                    foreach (ChatToolCall toolCall in completion.ToolCalls)
+                    {
+                        switch (toolCall.FunctionName)
+                        {
+                            case nameof(AddReactionAsync):
+                            {
+                                try
+                                {
+                                    await AddReactionAsync(message);
+                                    _chatMessages.Add(new ToolChatMessage(toolCall.Id, "Added reaction."));
+                                }
+                                catch (Exception)
+                                {
+                                    _chatMessages.Add(new ToolChatMessage(toolCall.Id, "Failed to add reaction."));
+                                }
+
+                                break;
+                            }
+                        }
+                    }
+
+                    requiresAction = true;
+                    break;
+                }
+
+                default:
+                    throw new NotImplementedException(completion.FinishReason.ToString());
             }
-            case ChatFinishReason.Length:
-                throw new NotImplementedException(
-                    "Incomplete model output due to MaxTokens parameter or token limit exceeded.");
+        } while (requiresAction);
 
-            case ChatFinishReason.ContentFilter:
-                throw new NotImplementedException("Omitted content due to a content filter flag.");
+        return "";
+    }
 
-            case ChatFinishReason.FunctionCall:
-                throw new NotImplementedException("Deprecated in favor of tool calls.");
-
-            default:
-                throw new NotImplementedException(completion.FinishReason.ToString());
-        }
+    private async Task AddReactionAsync(SocketMessage message)
+    {
+        await message.AddReactionAsync(new Emoji("\u2764\ufe0f"));
     }
 
     private static readonly string SystemMessage = """

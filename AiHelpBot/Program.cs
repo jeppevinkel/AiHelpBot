@@ -48,7 +48,7 @@ class Program
         }
         if (message.Channel.Id == _channelId)
         {
-            var aiResponse = await AiClient.CompleteChatAsync(message.Content);
+            var aiResponse = await AiClient.CompleteChatAsync(message);
             var responseMessages = aiResponse.SplitByLength(2000, "\n");
 
             foreach (var responseMessage in responseMessages)
