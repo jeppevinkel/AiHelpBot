@@ -46,7 +46,7 @@ class Program
         {
             return;
         }
-        if (message.Channel.Id == _channelId)
+        if (message.Channel.Id == _channelId && (message.MentionedUsers.Count < 0 || message.MentionedUsers.Any(it => it.Id == DiscordSocketClient.CurrentUser.Id)))
         {
             var aiResponse = await AiClient.CompleteChatAsync(message);
             var responseMessages = aiResponse.SplitByLength(2000, "\n");
