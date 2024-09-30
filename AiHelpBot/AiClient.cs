@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Collections;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Discord;
 using Discord.WebSocket;
@@ -64,37 +65,48 @@ public partial class AiClient
         do
         {
             requiresAction = false;
-            ChatCompletion completion = await _chatClient.CompleteChatAsync(MessagesWithSystem,
-                new ChatCompletionOptions()
+
+            ChatCompletionOptions chatCompletionOptions;
+            if (_model.StartsWith("o1"))
+            {
+                chatCompletionOptions = new ChatCompletionOptions();
+            }
+            else
+            {
+                chatCompletionOptions = new ChatCompletionOptions
                 {
-                    // Tools =
-                    // {
-                    //     ChatTool.CreateFunctionTool(
-                    //         functionName: nameof(AddReactionAsync),
-                    //         functionDescription: "Add a heart reaction to the message."
-                    //     ),
-                    //     ChatTool.CreateFunctionTool(
-                    //         functionName: nameof(SendFileAsync),
-                    //         functionDescription: "Send text content as a file.",
-                    //         functionParameters: BinaryData.FromString("""
-                    //                                                   {
-                    //                                                       "type": "object",
-                    //                                                       "properties": {
-                    //                                                           "content": {
-                    //                                                               "type": "string",
-                    //                                                               "description": "The contents of the file."
-                    //                                                           },
-                    //                                                           "fileName": {
-                    //                                                               "type": "string",
-                    //                                                               "description": "The name of the file, including file extension."
-                    //                                                           }
-                    //                                                       },
-                    //                                                       "required": [ "content", "fileName" ]
-                    //                                                   }
-                    //                                                   """)
-                    //     )
-                    // }
-                }, cancellationToken);
+                    Tools =
+                    {
+                        ChatTool.CreateFunctionTool(
+                            functionName: nameof(AddReactionAsync),
+                            functionDescription: "Add a heart reaction to the message."
+                        ),
+                        ChatTool.CreateFunctionTool(
+                            functionName: nameof(SendFileAsync),
+                            functionDescription: "Send text content as a file.",
+                            functionParameters: BinaryData.FromString("""
+                                                                      {
+                                                                          "type": "object",
+                                                                          "properties": {
+                                                                              "content": {
+                                                                                  "type": "string",
+                                                                                  "description": "The contents of the file."
+                                                                              },
+                                                                              "fileName": {
+                                                                                  "type": "string",
+                                                                                  "description": "The name of the file, including file extension."
+                                                                              }
+                                                                          },
+                                                                          "required": [ "content", "fileName" ]
+                                                                      }
+                                                                      """)
+                        )
+                    }
+                };
+            }
+
+            ChatCompletion completion = await _chatClient.CompleteChatAsync(MessagesWithSystem,
+                chatCompletionOptions, cancellationToken);
 
             switch (completion.FinishReason)
             {
@@ -104,8 +116,6 @@ public partial class AiClient
 
                     Regex fileRegex = FileSectionRegex();
                     Match match = fileRegex.Match(completion.ToString());
-
-                    Console.WriteLine(completion.ToString());
 
                     if (match.Groups.Count <= 1) return completion.ToString();
 
