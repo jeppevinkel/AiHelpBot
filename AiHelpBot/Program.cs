@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using System.Text;
+using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 
@@ -10,6 +11,7 @@ class Program
     {
         GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent
     });
+
     private static readonly AiClient AiClient = new();
     private static ulong _channelId;
 
@@ -46,15 +48,50 @@ class Program
         {
             return;
         }
-        if (message.Channel.Id == _channelId && (message.MentionedUsers.Count < 0 || message.MentionedUsers.Any(it => it.Id == DiscordSocketClient.CurrentUser.Id)))
-        {
-            var aiResponse = await AiClient.CompleteChatAsync(message);
-            var responseMessages = aiResponse.SplitByLength(2000, "\n");
 
-            foreach (var responseMessage in responseMessages)
+        if (message.Channel.Id == _channelId && (message.MentionedUsers.Count <= 0 ||
+                                                 message.MentionedUsers.Any(it =>
+                                                     it.Id == DiscordSocketClient.CurrentUser.Id)))
+        {
+            StringBuilder addendum = new("### FILE ###");
+            bool postAddendum = false;
+            foreach (Attachment attachment in message.Attachments.Where(it => it.ContentType.StartsWith("text/")))
             {
-                await message.Channel.SendMessageAsync(responseMessage);
+                var fileContent = await Downloader.DownloadTestFile(attachment.Url);
+
+                if (fileContent is null)
+                {
+                    continue;
+                }
+
+                postAddendum = true;
+
+                addendum.AppendLine("#FILENAME=" + attachment.Filename);
+                addendum.AppendLine(fileContent);
+                addendum.AppendLine();
             }
+
+            if (addendum.Length >= 25000)
+            {
+                addendum.Remove(25000, addendum.Length - 25000);
+                addendum.AppendLine();
+                addendum.AppendLine("== THE FILE WAS CUT OFF DUE TO CHARACTER LIMIT ==");
+            }
+            
+            addendum.AppendLine("### FILE END ###");
+
+            // Handle the message without blocking the Discord Client.
+            Task.Run(async () =>
+            {
+                var aiResponse = await AiClient.CompleteChatAsync(message, postAddendum ? addendum.ToString() : "");
+                var responseMessages = aiResponse.SplitByLength(2000, "\n");
+
+                foreach (var responseMessage in responseMessages)
+                {
+                    await message.Channel.SendMessageAsync(responseMessage);
+                }
+            }).AsyncNoAwait();
+
         }
     }
 

@@ -1,10 +1,12 @@
-﻿using Discord;
+﻿using System.Text.Json;
+using System.Text.RegularExpressions;
+using Discord;
 using Discord.WebSocket;
 using OpenAI.Chat;
 
 namespace AiHelpBot;
 
-public class AiClient
+public partial class AiClient
 {
     private readonly string _model;
     private readonly ChatClient _chatClient;
@@ -33,7 +35,7 @@ public class AiClient
         get
         {
             ChatMessage systemMessage = _model.StartsWith("o1")
-                ? new AssistantChatMessage(SystemMessage)
+                ? new AssistantChatMessage(FileHandlingPrompt + SystemMessage)
                 : new SystemChatMessage(SystemMessage);
 
             var list = new List<ChatMessage>
@@ -52,9 +54,11 @@ public class AiClient
             Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? throw new Exception("OPENAI_API_KEY not defined."));
     }
 
-    public async Task<string> CompleteChatAsync(SocketMessage message, CancellationToken cancellationToken = default)
+    public async Task<string> CompleteChatAsync(SocketMessage message, string addendum,
+        CancellationToken cancellationToken = default)
     {
-        _chatMessages.Add(new UserChatMessage(message.Content));
+        Console.WriteLine(addendum + message.Content);
+        _chatMessages.Add(new UserChatMessage(addendum + message.Content));
 
         bool requiresAction;
         do
@@ -63,13 +67,33 @@ public class AiClient
             ChatCompletion completion = await _chatClient.CompleteChatAsync(MessagesWithSystem,
                 new ChatCompletionOptions()
                 {
-                    Tools =
-                    {
-                        ChatTool.CreateFunctionTool(
-                            functionName: nameof(AddReactionAsync),
-                            functionDescription: "Add a heart reaction to the message."
-                        )
-                    }
+                    // Tools =
+                    // {
+                    //     ChatTool.CreateFunctionTool(
+                    //         functionName: nameof(AddReactionAsync),
+                    //         functionDescription: "Add a heart reaction to the message."
+                    //     ),
+                    //     ChatTool.CreateFunctionTool(
+                    //         functionName: nameof(SendFileAsync),
+                    //         functionDescription: "Send text content as a file.",
+                    //         functionParameters: BinaryData.FromString("""
+                    //                                                   {
+                    //                                                       "type": "object",
+                    //                                                       "properties": {
+                    //                                                           "content": {
+                    //                                                               "type": "string",
+                    //                                                               "description": "The contents of the file."
+                    //                                                           },
+                    //                                                           "fileName": {
+                    //                                                               "type": "string",
+                    //                                                               "description": "The name of the file, including file extension."
+                    //                                                           }
+                    //                                                       },
+                    //                                                       "required": [ "content", "fileName" ]
+                    //                                                   }
+                    //                                                   """)
+                    //     )
+                    // }
                 }, cancellationToken);
 
             switch (completion.FinishReason)
@@ -77,7 +101,32 @@ public class AiClient
                 case ChatFinishReason.Stop:
                 {
                     _chatMessages.Add(new AssistantChatMessage(completion));
-                    return completion.ToString();
+
+                    Regex fileRegex = FileSectionRegex();
+                    Match match = fileRegex.Match(completion.ToString());
+
+                    Console.WriteLine(completion.ToString());
+
+                    if (match.Groups.Count <= 1) return completion.ToString();
+
+                    var fileContent = match.Groups[1].Value;
+
+                    var fileName = "";
+
+                    Regex fileNameRegex = FileNameRegex();
+                    Match fileNameMatch = fileNameRegex.Match(fileContent);
+
+                    if (fileNameMatch.Groups.Count > 1)
+                    {
+                        fileName = fileNameMatch.Groups[1].Value;
+                    }
+
+                    var content = fileNameRegex.Replace(fileContent, "");
+                    content = content.Trim();
+
+                    await SendFileAsync(message, content, fileName);
+
+                    return fileRegex.Replace(completion.ToString(), "").Trim();
                 }
                 case ChatFinishReason.Length:
                     throw new NotImplementedException(
@@ -104,9 +153,43 @@ public class AiClient
                                     await AddReactionAsync(message);
                                     _chatMessages.Add(new ToolChatMessage(toolCall.Id, "Added reaction."));
                                 }
-                                catch (Exception)
+                                catch (Exception exception)
                                 {
-                                    _chatMessages.Add(new ToolChatMessage(toolCall.Id, "Failed to add reaction."));
+                                    _chatMessages.Add(new ToolChatMessage(toolCall.Id,
+                                        $"Failed to add reaction ({exception.Message})."));
+                                }
+
+                                break;
+                            }
+                            case nameof(SendFileAsync):
+                            {
+                                try
+                                {
+                                    using JsonDocument argumentsJson = JsonDocument.Parse(toolCall.FunctionArguments);
+                                    var hasContent =
+                                        argumentsJson.RootElement.TryGetProperty("content", out JsonElement content);
+                                    var hasFileName =
+                                        argumentsJson.RootElement.TryGetProperty("fileName", out JsonElement fileName);
+
+                                    if (!hasContent)
+                                    {
+                                        throw new ArgumentNullException(nameof(content),
+                                            "The content argument is required.");
+                                    }
+
+                                    if (!hasFileName)
+                                    {
+                                        throw new ArgumentNullException(nameof(fileName),
+                                            "The fileName argument is required.");
+                                    }
+
+                                    await SendFileAsync(message, content.GetString()!, fileName.GetString()!);
+                                    _chatMessages.Add(new ToolChatMessage(toolCall.Id, "Sent file."));
+                                }
+                                catch (Exception exception)
+                                {
+                                    _chatMessages.Add(new ToolChatMessage(toolCall.Id,
+                                        $"Failed to send file ({exception.Message})."));
                                 }
 
                                 break;
@@ -129,6 +212,21 @@ public class AiClient
     private async Task AddReactionAsync(SocketMessage message)
     {
         await message.AddReactionAsync(new Emoji("\u2764\ufe0f"));
+    }
+
+    private async Task SendFileAsync(SocketMessage message, Stream fileStream, string fileName)
+    {
+        await message.Channel.SendFileAsync(fileStream, fileName);
+    }
+
+    private async Task SendFileAsync(SocketMessage message, string content, string fileName)
+    {
+        await using var stream = new MemoryStream();
+        await using var writer = new StreamWriter(stream);
+        await writer.WriteAsync(content);
+        await writer.FlushAsync();
+        stream.Seek(0, SeekOrigin.Begin);
+        await SendFileAsync(message, stream, fileName);
     }
 
     private static readonly string SystemMessage = """
@@ -197,4 +295,27 @@ public class AiClient
 
                                                    Keep message short and to the point. No huge paragraphs unless explicitly requested.
                                                    """;
+
+    private static readonly string ToolsPrompt = """
+                                                    Tools are a series of functions that can be triggered along with the text response. To use any tool you must prepend the response with the following syntax: "#TOOL TOOLNAME=<toolname>;PARAMETERS=<parameters, separator=;;>;#". An example tool call could be #TOOL TOOLNAME=SendFileAsync;PARAMETERS=content=This is some text content to be sent in a file;;fileName=my-text-file.txt;#
+                                                    
+                                                    Available tools:
+                                                    TOOLNAME=SendFileAsync
+                                                    PARAMETERS=
+                                                        - name=content
+                                                          type: string
+                                                        - name=fileName
+                                                          type: string
+                                                          
+                                                 """;
+
+    private static readonly string FileHandlingPrompt = """
+                                                        Files will be separated by "### FILE ###" and "### FILE END###" tags. To respond with a file, you must use the same tag. The file name is defined by writing "#FILENAME=<filename>" anywhere within the file content area.
+                                                        """;
+
+    [GeneratedRegex("### FILE ###(.*)### FILE END ###", RegexOptions.Singleline)]
+    private static partial Regex FileSectionRegex();
+
+    [GeneratedRegex("#FILENAME=(.*)")]
+    private static partial Regex FileNameRegex();
 }
