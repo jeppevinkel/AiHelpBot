@@ -14,6 +14,7 @@ class Program
 
     private static readonly AiClient AiClient = new();
     private static ulong _channelId;
+    private const int FileLengthLimit = 30000;
 
     static async Task Main(string[] args)
     {
@@ -71,9 +72,9 @@ class Program
                 addendum.AppendLine();
             }
 
-            if (addendum.Length >= 25000)
+            if (addendum.Length >= FileLengthLimit)
             {
-                addendum.Remove(25000, addendum.Length - 25000);
+                addendum.Remove(FileLengthLimit, addendum.Length - FileLengthLimit);
                 addendum.AppendLine();
                 addendum.AppendLine("== THE FILE WAS CUT OFF DUE TO CHARACTER LIMIT ==");
             }
