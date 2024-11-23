@@ -302,7 +302,13 @@ public partial class AiClient
                                                    Q: tizen is not a recognized command.
                                                    A: This most likely means Tizen Studio didn't add itself to your path upon installation. The tool can be called with the full command instead.
                                                    For Windows, it would usually be `c:\tizen-studio\tools\ide\bin\tizen.bat` and for Mac it would usually be `$HOME/tizen-studio/tools/ide/bin/tizen`. If you have used a different installation directory, then you'll need to change the path accordingly.
+                                                   
+                                                   Q: I get this error `reason: Check certificate error : :Invalid certificate chain with certificate in signature`.
+                                                   A: This is a common issue with new firmware versions of Samsung televisions that no longer allow generic developer certificates. This issue is common on TVs using Tizen 8 One UI. The only known fix right now is to follow the guide here https://gist.github.com/SayantanRC/57762c8933f12a81501d8cd3cddb08e4. The top section is for Linux, and there is a Windows version of the commands lower down.
 
+                                                   Q: Where can I find the latest 10.8.Z build?
+                                                   A: It is located in this release https://github.com/jeppevinkel/jellyfin-tizen-builds/releases/tag/2024-10-27-1821
+                                                   
                                                    Keep message short and to the point. No huge paragraphs unless explicitly requested.
                                                    """;
 
