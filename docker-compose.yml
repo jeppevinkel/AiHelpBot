@@ -9,3 +9,9 @@
       - DISCORD_CHANNEL_ID=${DISCORD_CHANNEL_ID}
       - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
       - OPENAI_API_MODEL=${OPENAI_API_MODEL}
+    depends_on:
+      - qdrant
+  qdrant:
+    image: qdrant/qdrant
+    volumes:
+      - ./qdrant_storage:/qdrant/storage:z

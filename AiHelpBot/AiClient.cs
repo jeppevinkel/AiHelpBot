@@ -3,14 +3,18 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Discord;
 using Discord.WebSocket;
+using OpenAI;
 using OpenAI.Chat;
+using OpenAI.Embeddings;
 
 namespace AiHelpBot;
 
 public partial class AiClient
 {
     private readonly string _model;
+    private readonly OpenAIClient _openAIClient;
     private readonly ChatClient _chatClient;
+    private readonly EmbeddingClient _embeddingClient;
 
     private readonly List<ChatMessage> _chatMessages = [];
     private int? _messageBuffer;
@@ -51,8 +55,10 @@ public partial class AiClient
     public AiClient()
     {
         _model = Environment.GetEnvironmentVariable("OPENAI_API_MODEL") ?? "gpt-4o";
-        _chatClient = new(model: _model,
-            Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? throw new Exception("OPENAI_API_KEY not defined."));
+        _openAIClient = new OpenAIClient(Environment.GetEnvironmentVariable("OPENAI_API_KEY") ??
+                                         throw new Exception("OPENAI_API_KEY not defined."));
+        _chatClient = _openAIClient.GetChatClient(_model);
+        _embeddingClient = _openAIClient.GetEmbeddingClient("text-embedding-3-small");
     }
 
     public async Task<string> CompleteChatAsync(SocketMessage message, string addendum,
@@ -217,6 +223,13 @@ public partial class AiClient
         } while (requiresAction);
 
         return "";
+    }
+
+    public async Task<ReadOnlyMemory<float>> GetEmbeddingAsync(string content, EmbeddingGenerationOptions? embeddingGenerationOptions = default, CancellationToken cancellationToken = default)
+    {
+        Embedding embedding = await _embeddingClient.GenerateEmbeddingAsync(content, embeddingGenerationOptions, cancellationToken);
+
+        return embedding.ToFloats();
     }
 
     private async Task AddReactionAsync(SocketMessage message)
