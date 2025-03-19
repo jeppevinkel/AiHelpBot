@@ -309,6 +309,12 @@ public partial class AiClient
                                                    Q: Where can I find the latest 10.8.Z build?
                                                    A: It is located in this release https://github.com/jeppevinkel/jellyfin-tizen-builds/releases/tag/2024-10-27-1821
                                                    
+                                                   Q: How to sign a wgt file.
+                                                   A: For Linux:
+                                                      ~/tizen-studio/tools/ide/bin/tizen.sh package -t wgt -s <certificate profile name> -- <WGT file path>
+                                                      For Windows:
+                                                      C:\tizen-studio\tools\ide\bin\tizen.bat package -t wgt -s <certificate profile name> -- <WGT file path>
+                                                   
                                                    Keep message short and to the point. No huge paragraphs unless explicitly requested.
                                                    """;
 
