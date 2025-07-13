@@ -14,6 +14,9 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Discord.Net" Version="3.16.0" />
+        <PackageReference Include="OpenAI" Version="2.0.0-beta.12" />
+    </ItemGroup>
     <ItemGroup>
       <None Update="SystemPrompt.txt">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
