@@ -104,7 +104,7 @@ public class DiscordBotService : BackgroundService
 
                 foreach (var responseMessage in responseMessages)
                 {
-                    await message.Channel.SendMessageAsync(RemoveDiscordPings(responseMessage));
+                    await message.Channel.SendMessageAsync(responseMessage, allowedMentions: new AllowedMentions(AllowedMentionTypes.Users));
                 }
             }).AsyncNoAwait();
         }
@@ -131,6 +131,6 @@ public class DiscordBotService : BackgroundService
         string pattern = @"<@!?\d+>|<@&\d+>";
         
         // Replace all matches with an empty string
-        return Regex.Replace(input, pattern, "");
+        return Regex.Replace(input, pattern, "[FILTERED]");
     }
 }
