@@ -248,20 +248,22 @@ public partial class AiClient
                                                    | File name    | Description                                                                                                               |
                                                    |--------------|---------------------------------------------------------------------------------------------------------------------------|
                                                    | Jellyfin.wgt | Built with the latest stable release of jellyfin-web                                                                      |
+                                                   | 10.10.z      | Built with the bleeding edge of the branch for the 10.10.z releases                                                       |
                                                    | 10.9.z       | Built with the bleeding edge of the branch for the 10.9.z releases                                                        |
-                                                   | 10.8.z       | Built with the bleeding edge of the branch for the 10.8.z releases                                                        |
                                                    | master       | Built with the latest potentially unstable changes to jellyfin-web code (this will always be the newest possible version) |
                                                    | TrueHD       | TrueHD support is enabled (whether it works or not might depend on TV model)                                              |
-                                                   | intros       | Built with the modified web interface for https://github.com/jumoog/intro-skipper (might work)                            |
                                                    | secondary    | Built with the latest stable release of jellyfin-web and a different app ID to allow having a second account signed in    |
+                                                   | OblongIcon   | Use oblong type icon for TVs required it.  See more detail: jellyfin/jellyfin-tizen#171                                   |
+                                                   | GrayFix      | Potentially fixes an issue where the bars over and under the video are gray.  See more detail: jellyfin/jellyfin-tizen#65 |
 
                                                    *Disclaimer: I don't have many success stories with TVs older than 2018, but a few people in my Discord server have reported it working for their 2015 and 2016 TVs with the `10.8.z` version*
 
                                                    The latest release can be found at https://github.com/jeppevinkel/jellyfin-tizen-builds/releases/latest
 
                                                    ## Installation
+                                                   For a GUI installer that automates most of the process, check out this program mady by PatrickSt1991 [PatrickSt1991/Samsung-Jellyfin-Installer](https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer).  
                                                    For a one step install process using Docker, check out this guide made by Georift [Georift/install-jellyfin-tizen](https://github.com/Georift/install-jellyfin-tizen).  
-                                                   *I have no affiliation with Georift and I can't provide support related to that project since I have not personally used it or helped in its creation.*
+                                                   *I have no affiliation with these installers and I can't provide support related to them. Both of the installers directly use the builds I provide here.*
 
                                                    ### Prerequisites
                                                    - Tizen Studio with CLI (https://developer.tizen.org/development/tizen-studio/download)
