@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
@@ -103,7 +104,7 @@ public class DiscordBotService : BackgroundService
 
                 foreach (var responseMessage in responseMessages)
                 {
-                    await message.Channel.SendMessageAsync(responseMessage);
+                    await message.Channel.SendMessageAsync(RemoveDiscordPings(responseMessage));
                 }
             }).AsyncNoAwait();
         }
@@ -122,5 +123,14 @@ public class DiscordBotService : BackgroundService
         }
 
         return Task.CompletedTask;
+    }
+    
+    public static string RemoveDiscordPings(string input)
+    {
+        // Pattern to match different types of Discord mentions
+        string pattern = @"<@!?\d+>|<@&\d+>";
+        
+        // Replace all matches with an empty string
+        return Regex.Replace(input, pattern, "");
     }
 }
