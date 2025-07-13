@@ -53,6 +53,7 @@ public partial class AiClient
         _model = Environment.GetEnvironmentVariable("OPENAI_API_MODEL") ?? "gpt-4o";
         _chatClient = new(model: _model,
             Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? throw new Exception("OPENAI_API_KEY not defined."));
+        SystemMessage = File.ReadAllText("./SystemPrompt.txt");
     }
 
     public async Task<string> CompleteChatAsync(SocketMessage message, string addendum,
@@ -239,7 +240,7 @@ public partial class AiClient
         await SendFileAsync(message, stream, fileName);
     }
 
-    private static readonly string SystemMessage = """
+    private static string SystemMessage = """
                                                    You are an assistant, tasked with helping users troubleshooting their installation of Jellyfin on their Samsung Tizen TVs.
                                                    # jellyfin-tizen-builds
                                                    The purpose of this project is to automatically build the most up-to-date version of jellyfin-tizen.
