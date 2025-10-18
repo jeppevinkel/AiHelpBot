@@ -2,13 +2,25 @@
 
 About the Project
 - This project auto-builds the latest Jellyfin Web versions for Tizen.
-- Builds available: `Jellyfin.wgt`, `10.9.z`, `10.8.z`, `master`, `TrueHD`, `intros`, `secondary`.
+- Builds available: `Jellyfin.wgt`, `10.10.z`, `10.9.z`, `10.8.z`, `master`, `TrueHD`, `secondary`, `OblongIcon`, `GrayFix`.
 - `10.8.z` is most compatible with older TVs (pre-2018).
+
+Version descriptions
+| File name    | Description                                                                                                                                         |
+|--------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| Jellyfin.wgt | Built with the latest stable release of jellyfin-web                                                                                                |
+| 10.10.z      | Built with the bleeding edge of the branch for the 10.10.z releases                                                                                 |
+| 10.9.z       | Built with the bleeding edge of the branch for the 10.9.z releases                                                                                  |
+| master       | Built with the latest potentially unstable changes to jellyfin-web code (this will always be the newest possible version)                           |
+| TrueHD       | TrueHD support is enabled (whether it works or not might depend on TV model)                                                                        |
+| secondary    | Built with the latest stable release of jellyfin-web and a different app ID to allow having a second account signed in                              |
+| OblongIcon   | Use oblong type icon for TVs required it.  See more detail: https://github.com/jellyfin/jellyfin-tizen/issues/171                                   |
+| GrayFix      | Potentially fixes an issue where the bars over and under the video are gray.  See more detail: https://github.com/jellyfin/jellyfin-tizen/issues/65 |
 
 # Installation Resources
 Latest tizen jellyfin releases - https://github.com/jeppevinkel/jellyfin-tizen-builds/releases
 One-step Docker method - https://github.com/Georift/install-jellyfin-tizen
-(windows only) Easy one click setup that automatically downloads all requisites - https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer
+Easy one click setup that automatically downloads all requisites - https://github.com/PatrickSt1991/Samsung-Jellyfin-Installer
 
 # Prerequisites:
 Tizen Studio + CLI Tools - https://developer.tizen.org/development/tizen-studio/download/
@@ -41,7 +53,7 @@ Q: Certificate error? ("Invalid certificate chain")
 A: Newer Samsung firmware blocks generic dev certs. Follow this fix guide - https://gist.github.com/SayantanRC/57762c8933f12a81501d8cd3cddb08e4.
 
 Q: Where’s the latest 10.8.z build?
-A: Available here - https://github.com/jeppevinkel/jellyfin-tizen-builds/releases
+A: Available here - https://github.com/jeppevinkel/jellyfin-tizen-builds/releases/tag/2024-10-27-1821
 
 Q: How to sign a .wgt file?
 A: Linux - ~/tizen-studio/tools/ide/bin/tizen.sh package -t wgt -s <cert-profile> -- <path-to-wgt>
