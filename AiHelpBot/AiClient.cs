@@ -116,9 +116,9 @@ public partial class AiClient
                     _chatMessages.Add(new AssistantChatMessage(completion));
 
                     Regex fileRegex = FileSectionRegex();
-                    Match match = fileRegex.Match(completion.ToString());
+                    Match match = fileRegex.Match(completion.Content[0].Text);
 
-                    if (match.Groups.Count <= 1) return completion.ToString();
+                    if (match.Groups.Count <= 1) return completion.Content[0].Text;
 
                     var fileContent = match.Groups[1].Value;
 
@@ -137,7 +137,7 @@ public partial class AiClient
 
                     await SendFileAsync(message, content, fileName);
 
-                    return fileRegex.Replace(completion.ToString(), "").Trim();
+                    return fileRegex.Replace(completion.Content[0].Text, "").Trim();
                 }
                 case ChatFinishReason.Length:
                     throw new NotImplementedException(
