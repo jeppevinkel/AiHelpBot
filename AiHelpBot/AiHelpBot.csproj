@@ -19,7 +19,6 @@
     </ItemGroup>
     
     <ItemGroup>
-      <PackageReference Include="System.Text.Json" Version="10.0.3" />
       <None Update="SystemPrompt.txt">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
